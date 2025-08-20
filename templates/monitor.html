@@ -1,0 +1,1707 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LMArena Monitoring Panel</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f3f4f6;
+            color: #111827;
+        }
+
+        .header {
+            background: white;
+            padding: 16px 24px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .header h1 a {
+            color: #000000;
+            text-decoration: none;
+            transition: text-decoration 0.2s;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .header h1 a:hover {
+            text-decoration: underline;
+        }
+
+        .header h1 a::after {
+            content: "";
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z' fill='%23000000'/%3E%3C/svg%3E");
+            background-size: 16px 16px;
+            background-repeat: no-repeat;
+            background-position: center;
+            width: 16px;
+            height: 16px;
+            display: inline-block;
+            margin-left: 8px;
+            opacity: 0.7;
+            vertical-align: middle;
+        }
+
+        .header-info {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+
+
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: #f3f4f6;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #dc2626;
+        }
+
+        .status-dot.connected {
+            background: #10b981;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 16px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-card h3 {
+            font-size: 14px;
+            color: #6b7280;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 600;
+            color: #111827;
+        }
+
+        .stat-subtitle {
+            font-size: 12px;
+            color: #9ca3af;
+            margin-top: 4px;
+        }
+
+        .stat-change {
+            font-size: 14px;
+            margin-top: 4px;
+        }
+
+        .stat-change.positive {
+            color: #10b981;
+        }
+
+        .stat-change.negative {
+            color: #dc2626;
+        }
+
+        .section {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            margin-bottom: 24px;
+            overflow: hidden;
+        }
+
+        .section-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            color: #6b7280;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .tab:hover {
+            color: #111827;
+        }
+
+        .tab.active {
+            color: #4f46e5;
+            border-bottom-color: #4f46e5;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: #f9fafb;
+            padding: 12px 16px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 600;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        td {
+            padding: 12px 16px;
+            border-top: 1px solid #e5e7eb;
+            font-size: 14px;
+        }
+
+        tr:hover {
+            background: #f9fafb;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status-badge.success {
+            background: #d1fae5;
+            color: #059669;
+        }
+
+        .status-badge.failed {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .status-badge.active {
+            background: #dbeafe;
+            color: #2563eb;
+        }
+
+        .active-request {
+            padding: 16px;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .active-request:last-child {
+            border-bottom: none;
+        }
+
+        .request-info {
+            flex: 1;
+        }
+
+        .request-id {
+            font-family: monospace;
+            font-size: 12px;
+            color: #6b7280;
+        }
+
+        .request-model {
+            font-weight: 500;
+            margin-top: 4px;
+        }
+
+        .request-duration {
+            font-size: 14px;
+            color: #6b7280;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 48px;
+            color: #6b7280;
+        }
+
+        .refresh-btn {
+            padding: 8px 16px;
+            background: #4f46e5;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .refresh-btn:hover {
+            background: #4338ca;
+        }
+
+        .download-btn {
+            padding: 6px 12px;
+            background: #059669;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background 0.2s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .download-btn:hover {
+            background: #047857;
+        }
+
+        .error-log {
+            padding: 12px;
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 6px;
+            margin-bottom: 8px;
+        }
+
+        .error-type {
+            font-weight: 600;
+            color: #dc2626;
+            margin-bottom: 4px;
+        }
+
+        .error-message {
+            font-size: 14px;
+            color: #991b1b;
+            word-break: break-word;
+        }
+
+        .error-time {
+            font-size: 12px;
+            color: #b91c1c;
+            margin-top: 4px;
+        }
+
+        .model-card {
+            padding: 16px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+
+        .model-name {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .model-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            font-size: 14px;
+        }
+
+        .model-stat-label {
+            color: #6b7280;
+        }
+
+        .model-stat-value {
+            font-weight: 500;
+        }
+
+        .performance-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 16px;
+            padding: 16px;
+        }
+
+        .perf-item {
+            text-align: center;
+        }
+
+        .perf-value {
+            font-size: 24px;
+            font-weight: 600;
+            color: #4f46e5;
+        }
+
+        .perf-label {
+            font-size: 12px;
+            color: #6b7280;
+            margin-top: 4px;
+        }
+
+        .info-text {
+            font-size: 12px;
+            color: #6b7280;
+            margin: 8px 0;
+        }
+
+        .detail-btn {
+            padding: 4px 8px;
+            background: #f3f4f6;
+            border: none;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .detail-btn:hover {
+            background: #e5e7eb;
+        }
+
+        /* Modal box style */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-content {
+            position: relative;
+            background-color: white;
+            margin: 5% auto;
+            padding: 20px;
+            width: 80%;
+            max-width: 800px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .close {
+            font-size: 28px;
+            font-weight: bold;
+            color: #aaa;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .close:hover {
+            color: #000;
+        }
+
+        .detail-section {
+            margin-bottom: 20px;
+        }
+
+        .detail-section h3 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #374151;
+        }
+
+        .detail-item {
+            display: flex;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .detail-label {
+            font-weight: 500;
+            color: #6b7280;
+            min-width: 120px;
+        }
+
+        .detail-value {
+            color: #111827;
+            word-break: break-word;
+        }
+
+        .message-box {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 8px;
+        }
+
+        .message-role {
+            font-weight: 600;
+            color: #4f46e5;
+            margin-bottom: 4px;
+        }
+
+        .message-content {
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .response-content {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            padding: 12px;
+            white-space: pre-wrap;
+            word-break: break-word;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .metrics-link {
+            margin-left: 16px;
+            padding: 8px 16px;
+            color: #374151;
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.2s;
+        }
+
+        .metrics-link:hover {
+            color: #111827;
+        }
+
+        /* Alert style */
+        .alert-section {
+            position: relative;
+        }
+
+        .alert-item {
+            padding: 12px;
+            margin-bottom: 8px;
+            border-radius: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .alert-item.warning {
+            background: #fef3c7;
+            border: 1px solid #f59e0b;
+        }
+
+        .alert-item.critical {
+            background: #fee2e2;
+            border: 1px solid #dc2626;
+        }
+
+        .alert-message {
+            font-weight: 500;
+            color: #374151;
+        }
+
+        .alert-time {
+            font-size: 12px;
+            color: #6b7280;
+            margin-top: 4px;
+        }
+
+        .badge {
+            background: #ef4444;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            margin-left: 8px;
+            font-weight: 600;
+        }
+
+        /* API文档样式 */
+        .api-category {
+            background: #f9fafb;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .api-item {
+            margin-bottom: 16px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .api-item:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+
+        .api-endpoint {
+            font-family: monospace;
+            font-size: 14px;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 4px;
+        }
+
+        .api-description {
+            font-size: 13px;
+            color: #6b7280;
+            line-height: 1.5;
+        }
+
+        /* Setting the panel style */
+        .settings-group {
+            background: #f9fafb;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .setting-item {
+            margin-bottom: 16px;
+        }
+
+        .setting-item label {
+            display: inline-block;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 4px;
+            min-width: 200px;
+        }
+
+        .save-btn {
+            padding: 6px 16px;
+            background: #10b981;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .save-btn:hover {
+            background: #059669;
+        }
+    </style>
+</head>
+
+<body>
+    <header class="header">
+        <h1><a href="/" target="_blank">LMArena Monitoring Panel</a></h1>
+        <div class="header-info">
+            <a href="/metrics" class="metrics-link" target="_blank">Prometheus Metrics</a>
+            <div class="info-text" id="server-info">Connecting..</div>
+            <div class="status-indicator">
+                <span class="status-dot" id="ws-status"></span>
+                <span id="ws-status-text">Not connected</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Inside <div class="container"> , before counting the cards, add -->
+
+        <!-- API Endpoint Description -->
+        <div class="section" id="settings-section">
+            <div class="section-header">
+                <h2 class="section-title">⚙️ System Settings</h2>
+                <button class="refresh-btn" onclick="toggleSettings()">Show/Hide</button>
+            </div>
+            <div id="settings-content" style="padding: 20px; display: none;">
+                <!-- Network Settings -->
+                <div class="settings-group">
+                    <h3 style="margin-bottom: 16px; color: #4f46e5;">🌐 Network Settings</h3>
+                    <div class="setting-item">
+                        <label>IP Address Settings:</label>
+                        <div style="margin-top: 8px;">
+                            <label style="margin-right: 20px;">
+                                <input type="radio" name="ip-mode" id="auto-ip" checked onchange="toggleIpMode()">
+                                Auto Detect
+                            </label>
+                            <label>
+                                <input type="radio" name="ip-mode" id="manual-ip" onchange="toggleIpMode()">
+                                Manual Settings
+                            </label>
+                        </div>
+                        <div id="manual-ip-input" style="display: none; margin-top: 8px;">
+                            <input type="text" id="manual-ip-value" placeholder="For example: 192.168.0.15"
+                                style="padding: 6px 12px; border: 1px solid #e5e7eb; border-radius: 4px;">
+                            <button class="save-btn" onclick="saveNetworkSettings()">Save</button>
+                        </div>
+                        <div id="detected-ips" style="margin-top: 8px; font-size: 12px; color: #6b7280;"></div>
+                    </div>
+                </div>
+
+                <!-- Request Settings -->
+                <div class="settings-group" style="margin-top: 24px;">
+                    <h3 style="margin-bottom: 16px; color: #10b981;">📡 Request Settings</h3>
+                    <div class="setting-item">
+                        <label>Request Timeout (seconds):</label>
+                        <input type="number" id="timeout-seconds" min="30" max="600"
+                            style="width: 100px; padding: 6px 12px; border: 1px solid #e5e7eb; border-radius: 4px;">
+                    </div>
+                    <div class="setting-item" style="margin-top: 12px;">
+                        <label>Maximum Concurrent Requests:</label>
+                        <input type="number" id="max-concurrent" min="1" max="100"
+                            style="width: 100px; padding: 6px 12px; border: 1px solid #e5e7eb; border-radius: 4px;">
+                    </div>
+                    <button class="save-btn" style="margin-top: 12px;" onclick="saveRequestSettings()">Save Request
+                        Settings</button>
+                </div>
+
+                <!-- Monitoring Alert Settings -->
+                <div class="settings-group" style="margin-top: 24px;">
+                    <h3 style="margin-bottom: 16px; color: #f59e0b;">🚨 Alert Thresholds</h3>
+                    <div class="setting-item">
+                        <label>Error Rate Alert Threshold (%):</label>
+                        <input type="number" id="error-threshold" min="1" max="100" step="1"
+                            style="width: 100px; padding: 6px 12px; border: 1px solid #e5e7eb; border-radius: 4px;">
+                    </div>
+                    <div class="setting-item" style="margin-top: 12px;">
+                        <label>Response Time Alert Threshold (seconds):</label>
+                        <input type="number" id="response-threshold" min="1" max="300"
+                            style="width: 100px; padding: 6px 12px; border: 1px solid #e5e7eb; border-radius: 4px;">
+                    </div>
+                    <button class="save-btn" style="margin-top: 12px;" onclick="saveMonitoringSettings()">Save Alert
+                        Settings</button>
+                </div>
+
+                <!-- Current Access Address -->
+                <div class="settings-group"
+                    style="margin-top: 24px; background: #f9fafb; padding: 16px; border-radius: 8px;">
+                    <h3 style="margin-bottom: 16px;">📍 Current Access Address</h3>
+                    <div id="current-urls" style="font-family: monospace; font-size: 14px; line-height: 1.8;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section" id="api-docs-section">
+            <div class="section-header">
+                <h2 class="section-title">API Endpoint Documentation</h2>
+                <button class="refresh-btn" onclick="toggleApiDocs()">Show/Hide</button>
+            </div>
+            <div id="api-docs-content" style="padding: 20px; display: none;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px;">
+                    <!-- AI API -->
+                    <div class="api-category">
+                        <h3 style="color: #4f46e5; margin-bottom: 12px;">🤖 AI API</h3>
+                        <div class="api-item">
+                            <div class="api-endpoint">POST /v1/chat/completions</div>
+                            <div class="api-description">OpenAI compatible chat API, supports streaming output</div>
+                        </div>
+                        <div class="api-item">
+                            <div class="api-endpoint">GET /v1/models</div>
+                            <div class="api-description">Get a list of all available AI models</div>
+                        </div>
+                        <div class="api-item">
+                            <div class="api-endpoint">POST /v1/refresh-models</div>
+                            <div class="api-description">Manually refresh the model list</div>
+                        </div>
+                    </div>
+
+                    <!-- Monitoring and Health -->
+                    <div class="api-category">
+                        <h3 style="color: #10b981; margin-bottom: 12px;">📊 Monitoring and Health</h3>
+                        <div class="api-item">
+                            <div class="api-endpoint">GET /monitor</div>
+                            <div class="api-description">Real-time monitoring panel (current page)</div>
+                        </div>
+                        <div class="api-item">
+                            <div class="api-endpoint">GET /metrics</div>
+                            <div class="api-description">Performance metrics in Prometheus format</div>
+                        </div>
+                        <div class="api-item">
+                            <div class="api-endpoint">GET /health</div>
+                            <div class="api-description">Basic health check</div>
+                        </div>
+                        <div class="api-item">
+                            <div class="api-endpoint">GET /api/health/detailed</div>
+                            <div class="api-description">Detailed health status, including a health score from 0 to 100
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Statistics and Logs -->
+                    <div class="api-category">
+                        <h3 style="color: #f59e0b; margin-bottom: 12px;">📈 Statistics and Logs</h3>
+                        <div class="api-item">
+                            <div class="api-endpoint">GET /api/stats/summary</div>
+                            <div class="api-description">Summary of statistics for the last 24 hours</div>
+                        </div>
+                        <div class="api-item">
+                            <div class="api-endpoint">GET /api/logs/requests?limit=100</div>
+                            <div class="api-description">Get request logs (supports pagination)</div>
+                        </div>
+                        <div class="api-item">
+                            <div class="api-endpoint">GET /api/logs/errors?limit=50</div>
+                            <div class="api-description">Get error logs</div>
+                        </div>
+                        <div class="api-item">
+                            <div class="api-endpoint">GET /api/logs/download?log_type=requests</div>
+                            <div class="api-description">Download log files (requests/errors)</div>
+                        </div>
+                    </div>
+
+                    <!-- Other Features -->
+                    <div class="api-category">
+                        <h3 style="color: #dc2626; margin-bottom: 12px;">🔍 Other Features</h3>
+                        <div class="api-item">
+                            <div class="api-endpoint">GET /api/request/{request_id}</div>
+                            <div class="api-description">Get detailed information for a specific request</div>
+                        </div>
+                        <div class="api-item">
+                            <div class="api-endpoint">GET /api/alerts?limit=50</div>
+                            <div class="api-description">Get system alert history</div>
+                        </div>
+                        <div class="api-item">
+                            <div class="api-endpoint">WS /ws</div>
+                            <div class="api-description">Browser WebSocket connection endpoint</div>
+                        </div>
+                        <div class="api-item">
+                            <div class="api-endpoint">WS /ws/monitor</div>
+                            <div class="api-description">Monitoring panel WebSocket connection</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>Active Requests</h3>
+                <div class="stat-value" id="active-requests">0</div>
+                <div class="stat-subtitle" id="browser-status">Browser not connected</div>
+            </div>
+            <div class="stat-card">
+                <h3>Total Requests (24h)</h3>
+                <div class="stat-value" id="total-requests">0</div>
+                <div class="stat-subtitle" id="success-rate-text">Success Rate: 0%</div>
+            </div>
+            <div class="stat-card">
+                <h3>Average Response Time</h3>
+                <div class="stat-value" id="avg-duration">0s</div>
+                <div class="stat-subtitle">P95: <span id="p95-duration">0s</span></div>
+            </div>
+            <div class="stat-card">
+                <h3>QPS</h3>
+                <div class="stat-value" id="qps">0</div>
+                <div class="stat-subtitle">Requests per second</div>
+            </div>
+            <div class="stat-card">
+                <h3>Total Tokens (24h)</h3>
+                <div class="stat-value" id="total-tokens">0</div>
+                <div class="stat-subtitle">Input + Output</div>
+            </div>
+            <div class="stat-card">
+                <h3>Monitoring Clients</h3>
+                <div class="stat-value" id="monitor-clients">0</div>
+                <div class="stat-subtitle">Number of online monitors</div>
+            </div>
+        </div>
+
+        <!-- Performance Metrics -->
+        <div class="section">
+            <div class="section-header">
+                <h2 class="section-title">Performance Metrics</h2>
+            </div>
+            <div class="performance-grid" id="performance-metrics">
+                <div class="perf-item">
+                    <div class="perf-value" id="p50-time">0ms</div>
+                    <div class="perf-label">P50 Response Time</div>
+                </div>
+                <div class="perf-item">
+                    <div class="perf-value" id="p95-time">0ms</div>
+                    <div class="perf-label">P95 Response Time</div>
+                </div>
+                <div class="perf-item">
+                    <div class="perf-value" id="p99-time">0ms</div>
+                    <div class="perf-label">P99 Response Time</div>
+                </div>
+                <div class="perf-item">
+                    <div class="perf-value" id="uptime">0h</div>
+                    <div class="perf-label">Uptime</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Alerts -->
+        <div class="section alert-section">
+            <div class="section-header">
+                <h2 class="section-title">
+                    System Alerts
+                    <span id="alert-count" class="badge" style="display: none;">0</span>
+                </h2>
+                <button class="refresh-btn" onclick="loadAlerts()">Refresh</button>
+            </div>
+            <div id="alerts-container" style="padding: 20px; max-height: 300px; overflow-y: auto;">
+                <div class="empty-state">No alerts</div>
+            </div>
+        </div>
+
+        <!-- Active Requests -->
+        <div class="section">
+            <div class="section-header">
+                <h2 class="section-title">Active Requests</h2>
+                <button class="refresh-btn" onclick="refreshData()">Refresh</button>
+            </div>
+            <div id="active-requests-list">
+                <div class="empty-state">No active requests</div>
+            </div>
+        </div>
+
+        <!-- Model Usage Statistics -->
+        <div class="section">
+            <div class="section-header">
+                <h2 class="section-title">Model Usage Statistics</h2>
+            </div>
+            <div style="padding: 20px;">
+                <div id="model-stats-list">
+                    <div class="empty-state">Loading..</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Request Logs -->
+        <div class="section">
+            <div class="section-header">
+                <h2 class="section-title">Logs</h2>
+                <div>
+                    <a href="/api/logs/download?log_type=requests" class="download-btn">Download Request Logs</a>
+                    <a href="/api/logs/download?log_type=errors" class="download-btn" style="margin-left: 8px;">Download
+                        Error
+                        Logs</a>
+                </div>
+            </div>
+            <div class="tabs">
+                <div class="tab active" onclick="switchTab('requests')">Request Logs</div>
+                <div class="tab" onclick="switchTab('errors')">Error Logs</div>
+            </div>
+
+            <div id="requests-tab" class="tab-content">
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Time</th>
+                                <th>Request ID</th>
+                                <th>Model</th>
+                                <th>Status</th>
+                                <th>Input/Output Tokens</th>
+                                <th>Duration</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="request-logs">
+                            <tr>
+                                <td colspan="7" style="text-align: center;">Loading..</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="errors-tab" class="tab-content" style="display: none;">
+                <div style="padding: 20px;" id="error-logs">
+                    <div class="empty-state">No error logs</div>
+                </div>
+            </div>
+
+            <!-- Request details modal box -->
+            <div id="detailModal" class="modal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2 class="modal-title">Request Details</h2>
+                        <span class="close" onclick="closeModal()">&times;</span>
+                    </div>
+                    <div id="modalBody">
+                        <div class="empty-state">Loading..</div>
+                    </div>
+                </div>
+            </div>
+
+            <script>
+                let ws = null;
+                let currentTab = 'requests';
+                let stats = {};
+
+                // Toggle API documentation display
+                function toggleApiDocs() {
+                    const content = document.getElementById('api-docs-content');
+                    if (content.style.display === 'none') {
+                        content.style.display = 'block';
+                    } else {
+                        content.style.display = 'none';
+                    }
+                }
+
+                // Connect to WebSocket
+                function connectWebSocket() {
+                    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                    ws = new WebSocket(`${protocol}//${window.location.host}/ws/monitor`);
+
+                    ws.onopen = () => {
+                        console.log('Monitoring WebSocket connected');
+                        updateConnectionStatus(true);
+                    };
+
+                    ws.onmessage = (event) => {
+                        const data = JSON.parse(event.data);
+                        handleWebSocketMessage(data);
+                    };
+
+                    ws.onclose = () => {
+                        console.log('Monitoring WebSocket disconnected');
+                        updateConnectionStatus(false);
+                        // Reconnect after 5 seconds
+                        setTimeout(connectWebSocket, 5000);
+                    };
+
+                    ws.onerror = (error) => {
+                        console.error('WebSocket error:', error);
+                    };
+                }
+
+                // Handle WebSocket messages
+                function handleWebSocketMessage(data) {
+                    switch (data.type) {
+                        case 'initial_data':
+                            updateAllData(data);
+                            break;
+                        case 'request_start':
+                            addActiveRequest(data);
+                            break;
+                        case 'request_end':
+                            removeActiveRequest(data.request_id);
+                            refreshLogs();
+                            break;
+                        case 'stats_update':
+                            updateStats(data.stats);
+                            break;
+                        case 'alert':
+                            handleAlert(data.alert);
+                            break;
+                    }
+                }
+
+                // Update connection status
+                function updateConnectionStatus(connected) {
+                    const dot = document.getElementById('ws-status');
+                    const text = document.getElementById('ws-status-text');
+
+                    if (connected) {
+                        dot.classList.add('connected');
+                        text.textContent = 'Connected';
+                    } else {
+                        dot.classList.remove('connected');
+                        text.textContent = 'Disconnected';
+                    }
+                }
+
+                // Update all data
+                function updateAllData(data) {
+                    // Update active requests
+                    updateActiveRequests(data.active_requests);
+
+                    // Update statistics
+                    refreshStats();
+
+                    // Update logs
+                    refreshLogs();
+                }
+
+                // Format duration
+                function formatDuration(seconds) {
+                    if (seconds < 1) return (seconds * 1000).toFixed(0) + 'ms';
+                    if (seconds < 60) return seconds.toFixed(1) + 's';
+                    if (seconds < 3600) return Math.floor(seconds / 60) + 'm';
+                    return Math.floor(seconds / 3600) + 'h';
+                }
+
+                // Format large numbers
+                function formatNumber(num) {
+                    if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+                    if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+                    return num.toString();
+                }
+
+                // Update active requests list
+                function updateActiveRequests(requests) {
+                    const container = document.getElementById('active-requests-list');
+                    const count = Object.keys(requests).length;
+
+                    document.getElementById('active-requests').textContent = count;
+
+                    if (count === 0) {
+                        container.innerHTML = '<div class="empty-state">No active requests</div>';
+                        return;
+                    }
+
+                    container.innerHTML = Object.entries(requests).map(([id, req]) => {
+                        const duration = ((Date.now() / 1000) - req.start_time).toFixed(1);
+                        return `
+                            <div class="active-request">
+                                <div class="request-info">
+                                    <div class="request-id">${id}</div>
+                                    <div class="request-model">${req.model}</div>
+                                </div>
+                                <div class="request-duration">${duration}s</div>
+                                <span class="status-badge active">Processing</span>
+                            </div>
+                        `;
+                    }).join('');
+                }
+
+                // Add active request
+                function addActiveRequest(data) {
+                    const count = parseInt(document.getElementById('active-requests').textContent) + 1;
+                    document.getElementById('active-requests').textContent = count;
+                    refreshActiveRequests();
+                }
+
+                // Remove active request
+                function removeActiveRequest(requestId) {
+                    const count = Math.max(0, parseInt(document.getElementById('active-requests').textContent) - 1);
+                    document.getElementById('active-requests').textContent = count;
+                    refreshActiveRequests();
+                }
+
+                // Refresh statistics
+                async function refreshStats() {
+                    try {
+                        const response = await fetch('/api/stats/summary');
+                        const data = await response.json();
+
+                        // Update basic statistics
+                        document.getElementById('total-requests').textContent = formatNumber(data.summary
+                            .total_requests || 0);
+                        document.getElementById('success-rate-text').textContent =
+                            `Success Rate: ${data.summary.success_rate?.toFixed(1) || 0}%`;
+                        document.getElementById('avg-duration').textContent = formatDuration(data.summary
+                            .avg_duration || 0);
+                        document.getElementById('total-tokens').textContent = formatNumber((data.summary
+                            .total_input_tokens || 0) + (data.summary.total_output_tokens || 0));
+
+                        // Update performance metrics
+                        if (data.performance) {
+                            document.getElementById('qps').textContent = data.performance.qps ? data.performance.qps
+                                .toFixed(2) : '0';
+                            document.getElementById('p50-time').textContent = formatDuration(data.performance
+                                .p50_response_time || 0);
+                            document.getElementById('p95-time').textContent = formatDuration(data.performance
+                                .p95_response_time || 0);
+                            document.getElementById('p95-duration').textContent = formatDuration(data.performance
+                                .p95_response_time || 0);
+                            document.getElementById('p99-time').textContent = formatDuration(data.performance
+                                .p99_response_time || 0);
+                        }
+
+                        // Update server information
+                        document.getElementById('browser-status').textContent = data.browser_connected ?
+                            'Browser connected' : 'Browser disconnected';
+                        document.getElementById('monitor-clients').textContent = data.monitor_clients || 0;
+
+                        if (data.uptime) {
+                            document.getElementById('uptime').textContent = formatDuration(data.uptime);
+                            document.getElementById('server-info').textContent =
+                                `Server Uptime: ${formatDuration(data.uptime)} | Loaded ${data.models_loaded || 0} models`;
+                        }
+
+                        // Update model statistics
+                        updateModelStats(data.model_stats);
+
+                    } catch (error) {
+                        console.error('Failed to fetch statistics:', error);
+                    }
+                }
+
+                // Update model statistics
+                function updateModelStats(modelStats) {
+                    const container = document.getElementById('model-stats-list');
+
+                    if (!modelStats || modelStats.length === 0) {
+                        container.innerHTML = '<div class="empty-state">No model usage data</div>';
+                        return;
+                    }
+
+                    container.innerHTML = modelStats.map(stat => {
+                        const successRate = stat.total_requests > 0 ? ((stat.successful_requests / stat
+                            .total_requests) * 100).toFixed(1) : 0;
+
+                        const errorRate = (stat.error_rate * 100).toFixed(1);
+
+                        return `
+                            <div class="model-card">
+                                <div class="model-name">${stat.model}</div>
+                                <div class="model-stats">
+                                    <div>
+                                        <span class="model-stat-label">Total Requests:</span>
+                                        <span class="model-stat-value">${formatNumber(stat.total_requests)}</span>
+                                    </div>
+                                    <div>
+                                        <span class="model-stat-label">Success Rate:</span>
+                                        <span class="model-stat-value">${successRate}%</span>
+                                    </div>
+                                    <div>
+                                        <span class="model-stat-label">Average Duration:</span>
+                                        <span class="model-stat-value">${formatDuration(stat.avg_duration)}</span>
+                                    </div>
+                                    <div>
+                                        <span class="model-stat-label">QPS:</span>
+                                        <span class="model-stat-value">${stat.qps?.toFixed(3) || 0}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                }
+
+                // Refresh logs
+                async function refreshLogs() {
+                    if (currentTab === 'requests') {
+                        await refreshRequestLogs();
+                    } else {
+                        await refreshErrorLogs();
+                    }
+                }
+
+                // Refresh request logs
+                async function refreshRequestLogs() {
+                    try {
+                        const response = await fetch('/api/logs/requests?limit=50');
+                        const logs = await response.json();
+
+                        const tbody = document.getElementById('request-logs');
+
+                        if (logs.length === 0) {
+                            tbody.innerHTML =
+                                '<tr><td colspan="7" style="text-align: center;">No request logs</td></tr>';
+                            return;
+                        }
+
+                        tbody.innerHTML = logs.map(log => {
+                            const time = new Date(log.timestamp * 1000).toLocaleString();
+                            const statusClass = log.status === 'success' ? 'success' : 'failed';
+                            const duration = log.duration ? formatDuration(log.duration) : '-';
+
+                            return `
+                                <tr>
+                                    <td>${time}</td>
+                                    <td style="font-family: monospace; font-size: 12px;" title="${log.request_id}">${log.request_id.substring(0, 8)}..</td>
+                                    <td>${log.model}</td>
+                                    <td><span class="status-badge ${statusClass}">${log.status}</span></td>
+                                    <td>${log.input_tokens || 0} / ${log.output_tokens || 0}</td>
+                                    <td>${duration}</td>
+                                    <td>
+                                        <button class="detail-btn" onclick="viewRequestDetails('${log.request_id}')">Details</button>
+                                    </td>
+                                </tr>
+                            `;
+                        }).join('');
+
+                    } catch (error) {
+                        console.error('Failed to fetch request logs:', error);
+                    }
+                }
+
+                // Refresh error logs
+                async function refreshErrorLogs() {
+                    try {
+                        const response = await fetch('/api/logs/errors?limit=30');
+                        const logs = await response.json();
+
+                        const container = document.getElementById('error-logs');
+
+                        if (logs.length === 0) {
+                            container.innerHTML = '<div class="empty-state">No error logs</div>';
+                            return;
+                        }
+
+                        container.innerHTML = logs.map(log => {
+                            const time = new Date(log.timestamp * 1000).toLocaleString();
+
+                            return `
+                                <div class="error-log">
+                                    <div class="error-type">${log.error_type}</div>
+                                    <div class="error-message">${log.error_message}</div>
+                                    <div class="error-time">${time} - Request ID: ${log.request_id || 'N/A'}</div>
+                                </div>
+                            `;
+                        }).join('');
+
+                    } catch (error) {
+                        console.error('Failed to fetch error logs:', error);
+                    }
+                }
+
+                // Refresh active requests
+                async function refreshActiveRequests() {
+                    // Here you can call the API to get the latest active requests
+                    // Temporarily updated via WebSocket
+                }
+
+                // Switch tabs
+                function switchTab(tab) {
+                    currentTab = tab;
+
+                    // Update tab styles
+                    document.querySelectorAll('.tab').forEach(t => {
+                        t.classList.remove('active');
+                    });
+                    event.target.classList.add('active');
+
+                    // Switch content
+                    document.getElementById('requests-tab').style.display = tab === 'requests' ? 'block' : 'none';
+                    document.getElementById('errors-tab').style.display = tab === 'errors' ? 'block' : 'none';
+
+                    refreshLogs();
+                }
+
+                // View request details
+                async function viewRequestDetails(requestId) {
+                    const modal = document.getElementById('detailModal');
+                    const modalBody = document.getElementById('modalBody');
+
+                    modal.style.display = 'block';
+                    modalBody.innerHTML = '<div class="empty-state">Loading..</div>';
+
+                    try {
+                        const response = await fetch(`/api/request/${requestId}`);
+                        if (!response.ok) {
+                            throw new Error('Request details not found');
+                        }
+
+                        const details = await response.json();
+
+                        modalBody.innerHTML = `
+                            <div class="detail-section">
+                                <h3>Basic Information</h3>
+                                <div class="detail-item">
+                                    <div class="detail-label">Request ID:</div>
+                                    <div class="detail-value">${details.request_id}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Time:</div>
+                                    <div class="detail-value">${new Date(details.timestamp * 1000).toLocaleString()}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Model:</div>
+                                    <div class="detail-value">${details.model}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Status:</div>
+                                    <div class="detail-value"><span class="status-badge ${details.status === 'success' ? 'success' : 'failed'}">${details.status}</span></div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Duration:</div>
+                                    <div class="detail-value">${formatDuration(details.duration)}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Token Usage:</div>
+                                    <div class="detail-value">Input: ${details.input_tokens}, Output: ${details.output_tokens}</div>
+                                </div>
+                                ${details.error ? `
+                                <div class="detail-item">
+                                    <div class="detail-label">Error:</div>
+                                    <div class="detail-value" style="color: #dc2626;">${details.error}</div>
+                                </div>
+                                ` : ''}
+                            </div>
+                            
+                            <div class="detail-section">
+                                <h3>Request Parameters</h3>
+                                <div class="detail-item">
+                                    <div class="detail-label">Temperature:</div>
+                                    <div class="detail-value">${details.request_params.temperature || 'N/A'}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Top P:</div>
+                                    <div class="detail-value">${details.request_params.top_p || 'N/A'}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Max Tokens:</div>
+                                    <div class="detail-value">${details.request_params.max_tokens || 'N/A'}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Streaming:</div>
+                                    <div class="detail-value">${details.request_params.streaming ? 'Yes' : 'No'}</div>
+                                </div>
+                            </div>
+                            
+                            <div class="detail-section">
+                                <h3>Request Messages</h3>
+                                ${details.request_messages.map(msg => `
+                                    <div class="message-box">
+                                        <div class="message-role">${msg.role}</div>
+                                        <div class="message-content">${msg.content}</div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                            
+                            <div class="detail-section">
+                                <h3>Response Content</h3>
+                                <div class="response-content">${details.response_content || '(No response content)'}</div>
+                            </div>
+                        `;
+
+                    } catch (error) {
+                        modalBody.innerHTML = `<div class="empty-state">Loading failed: ${error.message}</div>`;
+                    }
+                }
+
+                // Close modal
+                function closeModal() {
+                    document.getElementById('detailModal').style.display = 'none';
+                }
+
+                // Close when clicking outside the modal
+                window.onclick = function (event) {
+                    const modal = document.getElementById('detailModal');
+                    if (event.target == modal) {
+                        modal.style.display = 'none';
+                    }
+                }
+
+                // Handle alert messages
+                function handleAlert(alert) {
+                    const container = document.getElementById('alerts-container');
+                    const alertElement = document.createElement('div');
+                    alertElement.className = `alert-item ${alert.severity}`;
+                    alertElement.innerHTML = `
+                        <div style="flex: 1;">
+                            <div class="alert-message">${alert.message}</div>
+                            <div class="alert-time">${new Date(alert.timestamp * 1000).toLocaleTimeString()}</div>
+                        </div>
+                    `;
+
+                    // If it's the first alert, clear "No alerts"
+                    if (container.querySelector('.empty-state')) {
+                        container.innerHTML = '';
+                    }
+
+                    // Add to the top
+                    container.insertBefore(alertElement, container.firstChild);
+
+                    // Update alert count
+                    const count = container.children.length;
+                    const badge = document.getElementById('alert-count');
+                    badge.textContent = count;
+                    badge.style.display = count > 0 ? 'inline-block' : 'none';
+
+                    // Keep only the most recent 20 alerts
+                    while (container.children.length > 20) {
+                        container.removeChild(container.lastChild);
+                    }
+
+                    // Optionally play a sound for critical alerts
+                    if (alert.severity === 'critical') {
+                        // Optional: play alert sound
+                        // const audio = new Audio('alert.mp3');
+                        // audio.play();
+                    }
+                }
+
+                // Load historical alerts
+                async function loadAlerts() {
+                    try {
+                        const response = await fetch('/api/alerts');
+                        const alerts = await response.json();
+
+                        const container = document.getElementById('alerts-container');
+                        if (alerts.length === 0) {
+                            container.innerHTML = '<div class="empty-state">No alerts</div>';
+                            document.getElementById('alert-count').style.display = 'none';
+                        } else {
+                            container.innerHTML = '';
+                            // Reverse iterate, newest first
+                            alerts.reverse().forEach(alert => handleAlert(alert));
+                        }
+                    } catch (error) {
+                        console.error('Failed to load alerts:', error);
+                    }
+                }
+
+                // Refresh data
+                function refreshData() {
+                    refreshStats();
+                    refreshLogs();
+                    refreshActiveRequests();
+                }
+
+                // Periodic refresh
+                setInterval(() => {
+                    refreshStats();
+                }, 5000); // Refresh statistics every 5 seconds
+
+                setInterval(() => {
+                    if (currentTab === 'requests') {
+                        refreshRequestLogs();
+                    }
+                }, 10000); // Refresh logs every 10 seconds
+
+                setInterval(() => {
+                    // No need to refresh alerts frequently, as there are WebSocket pushes
+                    // loadAlerts();
+                }, 30000); // Refresh alert history every 30 seconds
+
+                // === Settings Management Functions ===
+                let currentConfig = {};
+
+                // Toggle settings display
+                function toggleSettings() {
+                    const content = document.getElementById('settings-content');
+                    if (content.style.display === 'none') {
+                        content.style.display = 'block';
+                        loadSettings();
+                    } else {
+                        content.style.display = 'none';
+                    }
+                }
+
+                // Load settings
+                async function loadSettings() {
+                    try {
+                        // Get configuration
+                        const configResponse = await fetch('/api/config');
+                        currentConfig = await configResponse.json();
+
+                        // Get system information
+                        const infoResponse = await fetch('/api/system/info');
+                        const systemInfo = await infoResponse.json();
+
+                        // Fill in network settings
+                        document.getElementById('auto-ip').checked = currentConfig.network.auto_detect_ip !== false;
+                        document.getElementById('manual-ip').checked = currentConfig.network.auto_detect_ip ===
+                            false;
+                        document.getElementById('manual-ip-value').value = currentConfig.network.manual_ip || '';
+                        toggleIpMode();
+
+                        // Show detected IPs
+                        const detectedIps = systemInfo.detected_ips || [];
+                        document.getElementById('detected-ips').innerHTML =
+                            `Detected IP addresses: ${detectedIps.join(', ') || 'None'}`;
+
+                        // Fill in request settings
+                        document.getElementById('timeout-seconds').value = currentConfig.request.timeout_seconds;
+                        document.getElementById('max-concurrent').value = currentConfig.request
+                            .max_concurrent_requests;
+
+                        // Fill in monitoring settings
+                        document.getElementById('error-threshold').value = (currentConfig.monitoring
+                            .error_rate_threshold * 100).toFixed(0);
+                        document.getElementById('response-threshold').value = currentConfig.monitoring
+                            .response_time_threshold;
+
+                        // Display current access addresses
+                        displayCurrentUrls(systemInfo.server_urls);
+
+                    } catch (error) {
+                        console.error('Failed to load settings:', error);
+                        alert('Failed to load settings: ' + error.message);
+                    }
+                }
+
+                // Toggle IP mode
+                function toggleIpMode() {
+                    const isManual = document.getElementById('manual-ip').checked;
+                    document.getElementById('manual-ip-input').style.display = isManual ? 'block' : 'none';
+                }
+
+                // Save network settings
+                async function saveNetworkSettings() {
+                    try {
+                        const isManual = document.getElementById('manual-ip').checked;
+                        const manualIp = document.getElementById('manual-ip-value').value.trim();
+
+                        if (isManual && !manualIp) {
+                            alert('Please enter an IP address');
+                            return;
+                        }
+
+                        const config = {
+                            network: {
+                                auto_detect_ip: !isManual,
+                                manual_ip: isManual ? manualIp : null
+                            }
+                        };
+
+                        const response = await fetch('/api/config', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(config)
+                        });
+
+                        if (response.ok) {
+                            alert('Network settings saved, will take effect after refreshing the page');
+                            loadSettings();
+                        } else {
+                            throw new Error('Save failed');
+                        }
+                    } catch (error) {
+                        alert('Save failed: ' + error.message);
+                    }
+                }
+
+                // Save request settings
+                async function saveRequestSettings() {
+                    try {
+                        const config = {
+                            request: {
+                                timeout_seconds: parseInt(document.getElementById('timeout-seconds').value),
+                                max_concurrent_requests: parseInt(document.getElementById('max-concurrent')
+                                    .value)
+                            }
+                        };
+
+                        const response = await fetch('/api/config', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(config)
+                        });
+
+                        if (response.ok) {
+                            alert('Request settings saved');
+                            loadSettings();
+                        } else {
+                            throw new Error('Save failed');
+                        }
+                    } catch (error) {
+                        alert('Save failed: ' + error.message);
+                    }
+                }
+
+                // Save monitoring settings
+                async function saveMonitoringSettings() {
+                    try {
+                        const config = {
+                            monitoring: {
+                                error_rate_threshold: parseInt(document.getElementById('error-threshold')
+                                    .value) / 100,
+                                response_time_threshold: parseInt(document.getElementById('response-threshold')
+                                    .value)
+                            }
+                        };
+
+                        const response = await fetch('/api/config', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(config)
+                        });
+
+                        if (response.ok) {
+                            alert('Alert settings saved');
+                            loadSettings();
+                        } else {
+                            throw new Error('Save failed');
+                        }
+                    } catch (error) {
+                        alert('Save failed: ' + error.message);
+                    }
+                }
+
+                // Display current access addresses
+                function displayCurrentUrls(urls) {
+                    const container = document.getElementById('current-urls');
+                    container.innerHTML = `
+                        <div>📍 Local Access: <a href="${urls.local}" target="_blank">${urls.local}</a></div>
+                        <div>🌐 LAN Access: <a href="${urls.network}" target="_blank">${urls.network}</a></div>
+                        <div>📊 Monitoring Panel: <a href="${urls.monitor}" target="_blank">${urls.monitor}</a></div>
+                        <div>📈 Prometheus: <a href="${urls.metrics}" target="_blank">${urls.metrics}</a></div>
+                        <div>🏥 Health Check: <a href="${urls.health}" target="_blank">${urls.health}</a></div>
+                    `;
+                }
+
+                // Initialize
+                connectWebSocket();
+                refreshData();
+                loadAlerts(); // Load historical alerts
+            </script>
+</body>
+
+</html>
